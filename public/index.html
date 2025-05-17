@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión EAFIT</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        header {
+            background-color: #004a87;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #004a87;
+        }
+        button {
+            background-color: #004a87;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #003366;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #bd2130;
+        }
+        .btn-primary {
+            background-color: #004a87;
+        }
+        .btn-primary:hover {
+            background-color: #003366;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 50%;
+            max-height: 80vh; /* Altura máxima */
+            overflow-y: auto; /* Habilitar desplazamiento vertical */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .loading {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+        .error {
+            color: #dc3545;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            white-space: pre-line; /* Para permitir saltos de línea en los mensajes de error */
+        }
+        /* Estilo para campos con error */
+        input:invalid, select:invalid {
+            border-color: #dc3545;
+        }
+        /* Mejorar la visibilidad de los placeholders */
+        ::placeholder {
+            color: #999;
+            opacity: 0.7;
+        }
+        .help-text {
+            color: #6c757d;
+            font-size: 12px;
+            display: block;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Gestión Académica EAFIT</h1>
+        </header>
+        
+        <!-- Estudiantes -->
+        <div class="card">
+            <h2>Estudiantes</h2>
+            <button id="showEstudiantes">Ver Estudiantes</button>
+            <button id="addEstudianteBtn">Agregar Estudiante</button>
+            <div id="estudiantesTable"></div>
+        </div>
+        
+        <!-- Materias -->
+        <div class="card">
+            <h2>Materias</h2>
+            <button id="showMaterias">Ver Materias</button>
+            <button id="addMateriaBtn">Agregar Materia</button>
+            <div id="materiasTable"></div>
+        </div>
+        
+        <!-- Clases -->
+        <div class="card">
+            <h2>Clases</h2>
+            <button id="showClases">Ver Clases</button>
+            <button id="addClaseBtn">Agregar Clase</button>
+            <div id="clasesTable"></div>
+        </div>
+        
+        <!-- Modal Estudiante -->
+        <div id="estudianteModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3 id="estudianteModalTitle">Agregar Estudiante</h3>
+                <form id="estudianteForm">
+                    <input type="hidden" id="estudianteIdInput">
+                    <div class="form-group">
+                        <label for="idEstudiante">ID Estudiante:</label>
+                        <input type="number" id="idEstudiante" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombre">Nombre:</label>
+                        <input type="text" id="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellido">Apellido:</label>
+                        <input type="text" id="apellido" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="correo">Correo:</label>
+                        <input type="email" id="correo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono:</label>
+                        <input type="text" id="telefono" required>
+                    </div>
+                    <div id="estudianteError" class="error"></div>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Modal Materia -->
+        <div id="materiaModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3 id="materiaModalTitle">Agregar Materia</h3>
+                <form id="materiaForm">
+                    <input type="hidden" id="materiaIdInput">
+                    <div class="form-group">
+                        <label for="idMateria">ID Materia:</label>
+                        <input type="number" id="idMateria" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombreMateria">Nombre de la Materia:</label>
+                        <input type="text" id="nombreMateria" required>
+                    </div>
+                    <div id="materiaError" class="error"></div>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Modal Clase -->
+        <div id="claseModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3 id="claseModalTitle">Agregar Clase</h3>
+                <form id="claseForm">
+                    <input type="hidden" id="claseIdInput">
+                    <div class="form-group">
+                        <label for="idClase">ID Clase:</label>
+                        <input type="number" id="idClase" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="numeroClase">Número de Clase:</label>
+                        <input type="number" id="numeroClase" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="horaInicio">Hora de Inicio:</label>
+                        <input type="text" id="horaInicio" placeholder="13:30" required pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$">
+                        <small class="help-text">Formato: HH:MM (24 horas)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="horaFin">Hora de Fin:</label>
+                        <input type="text" id="horaFin" placeholder="15:00" required pattern="^([01]?[0-9]|2[0-3]):[0-5][0-9]$">
+                        <small class="help-text">Formato: HH:MM (24 horas)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaInicio">Fecha de Inicio:</label>
+                        <input type="text" id="fechaInicio" placeholder="2023-05-15" required pattern="^\d{4}-\d{2}-\d{2}$">
+                        <small class="help-text">Formato: YYYY-MM-DD</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaFin">Fecha de Fin:</label>
+                        <input type="text" id="fechaFin" placeholder="2023-06-15" required pattern="^\d{4}-\d{2}-\d{2}$">
+                        <small class="help-text">Formato: YYYY-MM-DD</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="capacidadClase">Capacidad:</label>
+                        <input type="number" id="capacidadClase" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="idEstudianteClase">Estudiante:</label>
+                        <select id="idEstudianteClase" required>
+                            <option value="">Seleccione un estudiante</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="idMateriaClase">Materia:</label>
+                        <select id="idMateriaClase" required>
+                            <option value="">Seleccione una materia</option>
+                        </select>
+                    </div>
+                    <div id="claseError" class="error"></div>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Modal de Confirmación para Eliminar -->
+        <div id="deleteConfirmModal" class="modal">
+            <div class="modal-content">
+                <h3>Confirmar Eliminación</h3>
+                <p id="deleteConfirmMessage">¿Estás seguro que deseas eliminar este elemento?</p>
+                <button id="confirmDeleteBtn" class="btn-danger">Eliminar</button>
+                <button id="cancelDeleteBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Funciones para cargar datos
+        async function fetchData(url) {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return [];
+            }
+        }
+
+        // Variables para almacenar los datos
+        let estudiantes = [];
+        let materias = [];
+        let clases = [];
+        let itemToDelete = null;
+
+        // Referencias a elementos modales
+        const estudianteModal = document.getElementById('estudianteModal');
+        const materiaModal = document.getElementById('materiaModal');
+        const claseModal = document.getElementById('claseModal');
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        
+        // Cerrar modales al hacer click en la X
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', () => {
+                estudianteModal.style.display = 'none';
+                materiaModal.style.display = 'none';
+                claseModal.style.display = 'none';
+                deleteConfirmModal.style.display = 'none';
+            });
+        });
+        
+        // Cancelar eliminación
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+            deleteConfirmModal.style.display = 'none';
+            itemToDelete = null;
+        });
+
+        // Confirmar eliminación
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+            if (!itemToDelete) return;
+            
+            try {
+                let url = '';
+                switch (itemToDelete.type) {
+                    case 'estudiante':
+                        url = `/api/estudiantes/${itemToDelete.id}`;
+                        break;
+                    case 'materia':
+                        url = `/api/materias/${itemToDelete.id}`;
+                        break;
+                    case 'clase':
+                        url = `/api/clases/${itemToDelete.id}`;
+                        break;
+                }
+                
+                const response = await fetch(url, { method: 'DELETE' });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error al eliminar');
+                }
+                
+                // Recargar datos según el tipo eliminado
+                switch (itemToDelete.type) {
+                    case 'estudiante':
+                        loadEstudiantes();
+                        break;
+                    case 'materia':
+                        loadMaterias();
+                        break;
+                    case 'clase':
+                        loadClases();
+                        break;
+                }
+                
+                deleteConfirmModal.style.display = 'none';
+                itemToDelete = null;
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // CRUD Estudiantes
+        document.getElementById('showEstudiantes').addEventListener('click', loadEstudiantes);
+        document.getElementById('addEstudianteBtn').addEventListener('click', () => {
+            // Resetear el formulario
+            document.getElementById('estudianteForm').reset();
+            document.getElementById('estudianteModalTitle').textContent = 'Agregar Estudiante';
+            document.getElementById('idEstudiante').disabled = false;
+            document.getElementById('estudianteIdInput').value = '';
+            document.getElementById('estudianteError').textContent = '';
+            estudianteModal.style.display = 'block';
+        });
+
+        // Manejar envío del formulario de estudiantes
+        document.getElementById('estudianteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const estudianteData = {
+                id_estudiante: parseInt(document.getElementById('idEstudiante').value),
+                nombre: document.getElementById('nombre').value,
+                apellido: document.getElementById('apellido').value,
+                correo: document.getElementById('correo').value,
+                telefono: document.getElementById('telefono').value
+            };
+
+            try {
+                const isEditing = document.getElementById('estudianteIdInput').value !== '';
+                let response;
+                
+                if (isEditing) {
+                    // Actualizar estudiante existente
+                    const id = parseInt(document.getElementById('estudianteIdInput').value);
+                    response = await fetch(`/api/estudiantes/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(estudianteData)
+                    });
+                } else {
+                    // Crear nuevo estudiante
+                    response = await fetch('/api/estudiantes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(estudianteData)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error en la operación');
+                }
+
+                // Cerrar modal y recargar datos
+                estudianteModal.style.display = 'none';
+                loadEstudiantes();
+            } catch (error) {
+                document.getElementById('estudianteError').textContent = error.message;
+            }
+        });
+
+        // Cargar estudiantes
+        async function loadEstudiantes() {
+            const container = document.getElementById('estudiantesTable');
+            container.innerHTML = '<p class="loading">Cargando estudiantes...</p>';
+            
+            estudiantes = await fetchData('/api/estudiantes');
+            
+            if (estudiantes.length === 0) {
+                container.innerHTML = '<p>No hay estudiantes registrados.</p>';
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Correo</th>
+                            <th>Teléfono</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            estudiantes.forEach(estudiante => {
+                html += `
+                    <tr>
+                        <td>${estudiante.id_estudiante}</td>
+                        <td>${estudiante.nombre}</td>
+                        <td>${estudiante.apellido}</td>
+                        <td>${estudiante.correo}</td>
+                        <td>${estudiante.telefono}</td>
+                        <td class="action-buttons">
+                            <button onclick="editEstudiante(${estudiante.id_estudiante})">Editar</button>
+                            <button class="btn-danger" onclick="deleteEstudiante(${estudiante.id_estudiante})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Editar estudiante
+        window.editEstudiante = function(id) {
+            const estudiante = estudiantes.find(e => e.id_estudiante === id);
+            if (!estudiante) return;
+            
+            document.getElementById('estudianteModalTitle').textContent = 'Editar Estudiante';
+            document.getElementById('estudianteIdInput').value = estudiante.id_estudiante;
+            document.getElementById('idEstudiante').value = estudiante.id_estudiante;
+            document.getElementById('idEstudiante').disabled = true; // No permitir cambiar el ID
+            document.getElementById('nombre').value = estudiante.nombre;
+            document.getElementById('apellido').value = estudiante.apellido;
+            document.getElementById('correo').value = estudiante.correo;
+            document.getElementById('telefono').value = estudiante.telefono;
+            document.getElementById('estudianteError').textContent = '';
+            
+            estudianteModal.style.display = 'block';
+        };
+
+        // Eliminar estudiante
+        window.deleteEstudiante = function(id) {
+            const estudiante = estudiantes.find(e => e.id_estudiante === id);
+            if (!estudiante) return;
+            
+            document.getElementById('deleteConfirmMessage').textContent = 
+                `¿Estás seguro que deseas eliminar al estudiante ${estudiante.nombre} ${estudiante.apellido}?`;
+            
+            itemToDelete = { type: 'estudiante', id };
+            deleteConfirmModal.style.display = 'block';
+        };
+
+        // CRUD Materias
+        document.getElementById('showMaterias').addEventListener('click', loadMaterias);
+        document.getElementById('addMateriaBtn').addEventListener('click', () => {
+            // Resetear el formulario
+            document.getElementById('materiaForm').reset();
+            document.getElementById('materiaModalTitle').textContent = 'Agregar Materia';
+            document.getElementById('idMateria').disabled = false;
+            document.getElementById('materiaIdInput').value = '';
+            document.getElementById('materiaError').textContent = '';
+            materiaModal.style.display = 'block';
+        });
+
+        // Manejar envío del formulario de materias
+        document.getElementById('materiaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const materiaData = {
+                id_materia: parseInt(document.getElementById('idMateria').value),
+                nombre_materia: document.getElementById('nombreMateria').value
+            };
+
+            try {
+                const isEditing = document.getElementById('materiaIdInput').value !== '';
+                let response;
+                
+                if (isEditing) {
+                    // Actualizar materia existente
+                    const id = parseInt(document.getElementById('materiaIdInput').value);
+                    response = await fetch(`/api/materias/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(materiaData)
+                    });
+                } else {
+                    // Crear nueva materia
+                    response = await fetch('/api/materias', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(materiaData)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error en la operación');
+                }
+
+                // Cerrar modal y recargar datos
+                materiaModal.style.display = 'none';
+                loadMaterias();
+            } catch (error) {
+                document.getElementById('materiaError').textContent = error.message;
+            }
+        });
+
+        // Cargar materias
+        async function loadMaterias() {
+            const container = document.getElementById('materiasTable');
+            container.innerHTML = '<p class="loading">Cargando materias...</p>';
+            
+            materias = await fetchData('/api/materias');
+            
+            if (materias.length === 0) {
+                container.innerHTML = '<p>No hay materias registradas.</p>';
+                return;
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            materias.forEach(materia => {
+                html += `
+                    <tr>
+                        <td>${materia.id_materia}</td>
+                        <td>${materia.nombre_materia}</td>
+                        <td class="action-buttons">
+                            <button onclick="editMateria(${materia.id_materia})">Editar</button>
+                            <button class="btn-danger" onclick="deleteMateria(${materia.id_materia})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Editar materia
+        window.editMateria = function(id) {
+            const materia = materias.find(m => m.id_materia === id);
+            if (!materia) return;
+            
+            document.getElementById('materiaModalTitle').textContent = 'Editar Materia';
+            document.getElementById('materiaIdInput').value = materia.id_materia;
+            document.getElementById('idMateria').value = materia.id_materia;
+            document.getElementById('idMateria').disabled = true; // No permitir cambiar el ID
+            document.getElementById('nombreMateria').value = materia.nombre_materia;
+            document.getElementById('materiaError').textContent = '';
+            
+            materiaModal.style.display = 'block';
+        };
+
+        // Eliminar materia
+        window.deleteMateria = function(id) {
+            const materia = materias.find(m => m.id_materia === id);
+            if (!materia) return;
+            
+            document.getElementById('deleteConfirmMessage').textContent = 
+                `¿Estás seguro que deseas eliminar la materia ${materia.nombre_materia}?`;
+            
+            itemToDelete = { type: 'materia', id };
+            deleteConfirmModal.style.display = 'block';
+        };
+
+        // CRUD Clases
+        document.getElementById('showClases').addEventListener('click', loadClases);
+        document.getElementById('addClaseBtn').addEventListener('click', async () => {
+            // Cargar estudiantes y materias para los selectores
+            if (estudiantes.length === 0) estudiantes = await fetchData('/api/estudiantes');
+            if (materias.length === 0) materias = await fetchData('/api/materias');
+            
+            // Llenar selectores
+            const estudianteSelect = document.getElementById('idEstudianteClase');
+            const materiaSelect = document.getElementById('idMateriaClase');
+            
+            // Limpiar opciones previas
+            estudianteSelect.innerHTML = '<option value="">Seleccione un estudiante</option>';
+            materiaSelect.innerHTML = '<option value="">Seleccione una materia</option>';
+            
+            // Agregar opciones de estudiantes
+            estudiantes.forEach(estudiante => {
+                const option = document.createElement('option');
+                option.value = estudiante.id_estudiante;
+                option.textContent = `${estudiante.id_estudiante} - ${estudiante.nombre} ${estudiante.apellido}`;
+                estudianteSelect.appendChild(option);
+            });
+            
+            // Agregar opciones de materias
+            materias.forEach(materia => {
+                const option = document.createElement('option');
+                option.value = materia.id_materia;
+                option.textContent = `${materia.id_materia} - ${materia.nombre_materia}`;
+                materiaSelect.appendChild(option);
+            });
+            
+            // Resetear el formulario
+            document.getElementById('claseForm').reset();
+            document.getElementById('claseModalTitle').textContent = 'Agregar Clase';
+            document.getElementById('idClase').disabled = false;
+            document.getElementById('claseIdInput').value = '';
+            document.getElementById('claseError').textContent = '';
+            claseModal.style.display = 'block';
+        });
+
+        // Manejar envío del formulario de clases
+        document.getElementById('claseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validar formato de fechas y horas antes de enviar
+            const horaInicio = document.getElementById('horaInicio').value;
+            const horaFin = document.getElementById('horaFin').value;
+            const fechaInicio = document.getElementById('fechaInicio').value;
+            const fechaFin = document.getElementById('fechaFin').value;
+            
+            // Validación de formato de hora (HH:MM)
+            const horaRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+            // Validación de formato de fecha (YYYY-MM-DD)
+            const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+            
+            let errorMessage = "";
+            
+            if (!horaRegex.test(horaInicio)) {
+                errorMessage += "La hora de inicio debe tener formato HH:MM\n";
+            }
+            if (!horaRegex.test(horaFin)) {
+                errorMessage += "La hora de fin debe tener formato HH:MM\n";
+            }
+            if (!fechaRegex.test(fechaInicio)) {
+                errorMessage += "La fecha de inicio debe tener formato YYYY-MM-DD\n";
+            }
+            if (!fechaRegex.test(fechaFin)) {
+                errorMessage += "La fecha de fin debe tener formato YYYY-MM-DD\n";
+            }
+            
+            if (errorMessage) {
+                document.getElementById('claseError').textContent = errorMessage;
+                return;
+            }
+            
+            // Continuar con el envío del formulario si no hay errores
+            const claseData = {
+                id_clase: parseInt(document.getElementById('idClase').value),
+                numero_clase: parseInt(document.getElementById('numeroClase').value),
+                hora_inicio: horaInicio,
+                hora_fin: horaFin,
+                fecha_inicio: fechaInicio,
+                fecha_fin: fechaFin,
+                capacidad_clase: parseInt(document.getElementById('capacidadClase').value),
+                id_estudiante: parseInt(document.getElementById('idEstudianteClase').value),
+                id_materia: parseInt(document.getElementById('idMateriaClase').value)
+            };
+
+            try {
+                const isEditing = document.getElementById('claseIdInput').value !== '';
+                let response;
+                
+                if (isEditing) {
+                    // Actualizar clase existente
+                    const id = parseInt(document.getElementById('claseIdInput').value);
+                    response = await fetch(`/api/clases/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(claseData)
+                    });
+                } else {
+                    // Crear nueva clase
+                    response = await fetch('/api/clases', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(claseData)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error en la operación');
+                }
+
+                // Cerrar modal y recargar datos
+                claseModal.style.display = 'none';
+                loadClases();
+            } catch (error) {
+                document.getElementById('claseError').textContent = error.message;
+            }
+        });
+
+        // Cargar clases
+        async function loadClases() {
+            const container = document.getElementById('clasesTable');
+            container.innerHTML = '<p class="loading">Cargando clases...</p>';
+            
+            // Cargar estudiantes y materias para mostrar nombres en lugar de IDs
+            if (estudiantes.length === 0) estudiantes = await fetchData('/api/estudiantes');
+            if (materias.length === 0) materias = await fetchData('/api/materias');
+            
+            clases = await fetchData('/api/clases');
+            
+            if (clases.length === 0) {
+                container.innerHTML = '<p>No hay clases registradas.</p>';
+                return;
+            }
+            
+            // Función para obtener el nombre del estudiante por su ID
+            function getEstudianteNombre(idEstudiante) {
+                const estudiante = estudiantes.find(e => e.id_estudiante === idEstudiante);
+                return estudiante ? `${estudiante.nombre} ${estudiante.apellido}` : 'Desconocido';
+            }
+            
+            // Función para obtener el nombre de la materia por su ID
+            function getMateriaNombre(idMateria) {
+                const materia = materias.find(m => m.id_materia === idMateria);
+                return materia ? materia.nombre_materia : 'Desconocida';
+            }
+            
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Número</th>
+                            <th>Horario</th>
+                            <th>Fechas</th>
+                            <th>Estudiante</th>
+                            <th>Materia</th>
+                            <th>Capacidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            clases.forEach(clase => {
+                html += `
+                    <tr>
+                        <td>${clase.id_clase}</td>
+                        <td>${clase.numero_clase}</td>
+                        <td>${clase.hora_inicio} - ${clase.hora_fin}</td>
+                        <td>${clase.fecha_inicio} - ${clase.fecha_fin}</td>
+                        <td>${getEstudianteNombre(clase.id_estudiante)}</td>
+                        <td>${getMateriaNombre(clase.id_materia)}</td>
+                        <td>${clase.capacidad_clase}</td>
+                        <td class="action-buttons">
+                            <button onclick="editClase(${clase.id_clase})">Editar</button>
+                            <button class="btn-danger" onclick="deleteClase(${clase.id_clase})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Editar clase
+        window.editClase = async function(id) {
+            const clase = clases.find(c => c.id_clase === id);
+            if (!clase) return;
+            
+            // Cargar estudiantes y materias para los selectores si no están cargados
+            if (estudiantes.length === 0) estudiantes = await fetchData('/api/estudiantes');
+            if (materias.length === 0) materias = await fetchData('/api/materias');
+            
+            // Llenar selectores
+            const estudianteSelect = document.getElementById('idEstudianteClase');
+            const materiaSelect = document.getElementById('idMateriaClase');
+            
+            // Limpiar opciones previas
+            estudianteSelect.innerHTML = '<option value="">Seleccione un estudiante</option>';
+            materiaSelect.innerHTML = '<option value="">Seleccione una materia</option>';
+            
+            // Agregar opciones de estudiantes
+            estudiantes.forEach(estudiante => {
+                const option = document.createElement('option');
+                option.value = estudiante.id_estudiante;
+                option.textContent = `${estudiante.id_estudiante} - ${estudiante.nombre} ${estudiante.apellido}`;
+                estudianteSelect.appendChild(option);
+            });
+            
+            // Agregar opciones de materias
+            materias.forEach(materia => {
+                const option = document.createElement('option');
+                option.value = materia.id_materia;
+                option.textContent = `${materia.id_materia} - ${materia.nombre_materia}`;
+                materiaSelect.appendChild(option);
+            });
+            
+            document.getElementById('claseModalTitle').textContent = 'Editar Clase';
+            document.getElementById('claseIdInput').value = clase.id_clase;
+            document.getElementById('idClase').value = clase.id_clase;
+            document.getElementById('idClase').disabled = true; // No permitir cambiar el ID
+            document.getElementById('numeroClase').value = clase.numero_clase;
+            document.getElementById('horaInicio').value = clase.hora_inicio;
+            document.getElementById('horaFin').value = clase.hora_fin;
+            document.getElementById('fechaInicio').value = clase.fecha_inicio;
+            document.getElementById('fechaFin').value = clase.fecha_fin;
+            document.getElementById('capacidadClase').value = clase.capacidad_clase;
+            document.getElementById('idEstudianteClase').value = clase.id_estudiante;
+            document.getElementById('idMateriaClase').value = clase.id_materia;
+            document.getElementById('claseError').textContent = '';
+            
+            claseModal.style.display = 'block';
+        };
+
+        // Eliminar clase
+        window.deleteClase = function(id) {
+            const clase = clases.find(c => c.id_clase === id);
+            if (!clase) return;
+            
+            document.getElementById('deleteConfirmMessage').textContent = 
+                `¿Estás seguro que deseas eliminar la clase ${clase.id_clase}?`;
+            
+            itemToDelete = { type: 'clase', id };
+            deleteConfirmModal.style.display = 'block';
+        };
+
+        // Cargar datos iniciales
+        window.addEventListener('DOMContentLoaded', () => {
+            loadEstudiantes();
+            loadMaterias();
+        });
+    </script>
+</body>
+</html>
